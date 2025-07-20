@@ -154,6 +154,10 @@ app.post('/api/login', async (req, res) => {
   }
 });const normalizeDebateType = (raw) => raw.replace(/\s+/g, '').toLowerCase();
 
+app.get('/', (req, res) => {
+  res.send('<h1>✅ Debattlex Backend is Live!</h1>');
+});
+
 app.post('/api/userdata', async (req, res) => {
   const { email, entry } = req.body;
 
