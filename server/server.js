@@ -131,6 +131,11 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'pong 🏓 from Debattlex backend' });
+});
+
+
 // ✅ LOGIN
 app.post('/api/login', async (req, res) => {
   try {
