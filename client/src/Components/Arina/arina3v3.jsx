@@ -269,7 +269,7 @@ if (prev <= 1) {
   }, [triggerNextAISpeech, currentSpeakerIndex, debateStarted]);
 
   function hangupclick(){
-    navigate('/aijudge')
+    navigate('/Aijudge')
   }
 
   const nextSpeaker = () => {
@@ -281,7 +281,7 @@ if (prev <= 1) {
       setTimeout(() => {
         const exitBtn = document.querySelector('.hangup');
         if (exitBtn) exitBtn.click();
-        window.location.href = "/aijudge";
+        window.location.href = "/Aijudge";
       }, 10000);
       return;
     }
