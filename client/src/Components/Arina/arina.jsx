@@ -114,7 +114,7 @@ useEffect(() => {
         setIsMuted(true);
         const ai_stance = userStance === "proposition" ? "opposition" : "proposition";
 
-        const aiRes = await axios.post('/ask', {
+        const aiRes = await axios.post(url+'/ask', {
           question: text,
           topic: debateTopic,
           stance: ai_stance,
