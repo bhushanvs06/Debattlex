@@ -1,0 +1,206 @@
+.outer-container {
+  display: flex;
+  min-height: 100%;
+  flex: 1 1 0%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding:4rem;
+  padding-bottom: 7.8%;
+}
+
+@media (min-width: 640px) {
+  .outer-container {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (min-width: 768px) {
+  .outer-container {
+    aspect-ratio: 3 / 1;
+  }
+}
+.step-circle-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 70rem;
+  height: 180%;
+  border-radius: 2rem;
+  
+  background: rgba(183, 67, 236, 0.212); /* lighter translucent white */
+  backdrop-filter: blur(25px); /* stronger blur for soft effect */
+  -webkit-backdrop-filter: blur(25px); /* Safari support */
+
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05),
+              0 10px 10px -5px rgba(0, 0, 0, 0.02); /* softer shadow */
+  
+  border: 1px solid rgba(255, 255, 255, 0.3); /* lighter frosted border */
+}
+
+
+
+.step-indicator-row {
+  display: flex;
+  width: 90%;
+  align-items: center;
+  padding: 2rem;
+}
+
+.step-content-default {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-default {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.footer-container {
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 2rem;
+}
+
+.footer-nav {
+  margin-top: 2.5rem;
+  display: flex;
+}
+
+.footer-nav.spread {
+  justify-content: space-between;
+}
+
+.footer-nav.end {
+  justify-content: flex-end;
+}
+
+.back-button {
+  transition: all 350ms;
+   border-radius: 9999px;
+ background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 50%, #8b5cf6 100%);
+  border: none;
+  color: #ffffff;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-weight: bolder;
+  font-style: italic;
+  font-variant: small-caps;
+}
+
+.back-button:hover {
+background: linear-gradient(135deg, #6b21a8 0%, #8b5cf6 50%, #c084fc 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.back-button.inactive {
+  pointer-events: none;
+  opacity: 0.5;
+  background-color: #d7d7a9;
+}
+
+.next-button {
+    transition: all 350ms ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 50%, #8b5cf6 100%);
+  border: none;
+  color: #ffffff;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-weight: bolder;
+  font-style: italic;
+  font-variant: small-caps;
+}
+
+/* Hover effect */ 
+
+.next-button:hover {
+  background: linear-gradient(135deg, #6b21a8 0%, #8b5cf6 50%, #c084fc 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Ripple effect on click */
+.next-button:active::before {
+    background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 50%, #8b5cf6 100%);
+  border: none;
+  color: #ffffff;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-weight: bolder;
+  font-style: italic;
+  font-variant: small-caps;
+}
+
+
+
+.step-indicator {
+  position: relative;
+  cursor: pointer;
+  outline: none;
+}
+
+.step-indicator-inner {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.active-dot {
+  height: 0.75rem;
+  width: 0.75rem;
+  border-radius: 9999px;
+  background-color: #fff;
+}
+
+.step-number {
+  font-size: 0.875rem;
+}
+
+.step-connector {
+  position: relative;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  height: 0.125rem;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 0.25rem;
+  background-color: #52525b;
+}
+
+.step-connector-inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+}
+
+.check-icon {
+  height: 1rem;
+  width: 1rem;
+  color: #fff;
+}

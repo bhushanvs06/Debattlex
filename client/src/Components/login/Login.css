@@ -1,0 +1,15 @@
+/* Login.css */
+
+.login-page{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0d001a, #1a002d);
+  padding: 7.3em;
+  align-items: center;
+}
+/* Reset margin and height */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
