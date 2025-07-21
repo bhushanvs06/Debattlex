@@ -4,7 +4,7 @@ import { Bar } from 'react-chartjs-2';
 import Lottie from 'lottie-react';
 import Confetti from 'react-confetti';
 import cryAnimation from './cry.json';
-
+import { useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
   BarElement,
@@ -17,6 +17,7 @@ import {
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 const url = 'https://debattlex.onrender.com'
 const AIJudge = () => {
+  const navigate = useNavigate();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [latestTopic, setLatestTopic] = useState('');
@@ -446,7 +447,7 @@ const AIJudge = () => {
       )}
 
       <button
-        onClick={() => window.location.href = '/overview'}
+        onClick={() => navigate('/overview')}
         style={{
           marginTop: '2rem',
           padding: '0.75rem 1.5rem',
