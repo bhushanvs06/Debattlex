@@ -1271,3 +1271,24 @@ result-scroll::-webkit-scrollbar-thumb:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
+.ready-btn{
+  background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 50%, #8b5cf6 100%);
+  border: none;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px -5px rgba(76, 29, 149, 0.4);
+  border: 1px solid #3730a3;
+  position: relative;
+  overflow: hidden;
+  margin-left: 10px;
+}
+.ready-btn:hover{
+    transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
+  border-color: #6366f1;
+}
