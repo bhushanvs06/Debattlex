@@ -1642,6 +1642,48 @@ app.post('/api/saveNotes', async (req, res) => {
   }
 });
 
+app.get('/api/fetchNotes', async (req, res) => {
+  try {
+    const { email, topic, topicSlug, team, role } = req.query;
+
+    // Validate only the role parameter
+    if (!['pm', 'dpm', 'gw', 'lo', 'dlo', 'ow'].includes(role)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid role value' });
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: 'fail', message: 'User not found' });
+    }
+
+    // Find debate entry
+    const entry = user.entries?.get(topicSlug);
+    if (!entry) {
+      return res.status(404).json({ status: 'fail', message: 'Topic not found' });
+    }
+
+    // Find team block
+    const teamBlock = entry[team];
+    if (!teamBlock) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid team' });
+    }
+
+    // Find role block
+    const roleBlock = teamBlock[role];
+    if (!roleBlock) {
+      return res.status(400).json({ status: 'fail', message: 'Role not found in team' });
+    }
+
+    // Return notes (default to empty string if notes field is undefined)
+    const notes = roleBlock.notes || '';
+    res.status(200).json({ status: 'success', notes });
+  } catch (err) {
+    console.error('Error fetching notes:', err);
+    res.status(500).json({ status: 'fail', message: 'Failed to fetch notes' });
+  }
+});
+
 // 🚀 Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
