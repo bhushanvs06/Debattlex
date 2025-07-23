@@ -1,6 +1,6 @@
 # 🧠 Debattlex - Real-Time AI Debate Platform
 
-Debattlex is a real-time AI-powered debate platform where users can engage in structured debates with AI or other users in formats like 1v1, 3v3, and 5v5. The platform is designed to improve communication, critical thinking, and argumentation through live speech, summaries, role-based preparation, and AI feedback.
+Debattlex is a real-time AI-powered debate platform where users can engage in structured debates with AI or other users in formats like 1v1 and 3v3. The platform is designed to improve communication, critical thinking, and argumentation through live speech, summaries, role-based preparation, and AI feedback.
 
 ## 🚀 Live Demo
 
