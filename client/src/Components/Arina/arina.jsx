@@ -43,13 +43,11 @@ const Arina = () => {
   const [highlightedWordIndex, setHighlightedWordIndex] = useState(0);
   const [userRole, setUserRole] = useState('');
 
-
   const synthRef = useRef(window.speechSynthesis);
   const recognitionRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-
     const storedEmail = localStorage.getItem("userEmail");
     if (!storedEmail) {
       alert("User email not found. Please log in again.");
@@ -58,28 +56,28 @@ const Arina = () => {
     }
     setEmail(storedEmail);
   }, []);
-useEffect(() => {
-  if (!email) return;
-  console.log("📩 Fetching entries for:", email);
-  axios.post(url+'/api/fetchEntries', { email })
-    .then(res => {
-      const entries = res.data.entries;
-      const keys = Object.keys(entries);
-      if (keys.length > 0) {
-        const latestKey = keys[keys.length - 1];
-        const latestEntry = entries[latestKey];
-        console.log("📌 Latest Entry:", latestEntry);
-        setDebateTopic(latestEntry.topic);
-        setUserStance(latestEntry.stance);
-        setDebateType(latestEntry.type);
-        setUserRole(latestEntry.userrole);  // ✅ add this line
-      } else {
-        console.warn("⚠️ No entries found for user.");
-      }
-    })
-    .catch(err => console.error("❌ Failed to fetch entry:", err));
-}, [email]);
 
+  useEffect(() => {
+    if (!email) return;
+    console.log("📩 Fetching entries for:", email);
+    axios.post(url+'/api/fetchEntries', { email })
+      .then(res => {
+        const entries = res.data.entries;
+        const keys = Object.keys(entries);
+        if (keys.length > 0) {
+          const latestKey = keys[keys.length - 1];
+          const latestEntry = entries[latestKey];
+          console.log("📌 Latest Entry:", latestEntry);
+          setDebateTopic(latestEntry.topic);
+          setUserStance(latestEntry.stance);
+          setDebateType(latestEntry.type);
+          setUserRole(latestEntry.userrole);
+        } else {
+          console.warn("⚠️ No entries found for user.");
+        }
+      })
+      .catch(err => console.error("❌ Failed to fetch entry:", err));
+  }, [email]);
 
   const toggleMute = () => {
     if (synthRef.current.speaking) synthRef.current.cancel();
@@ -91,6 +89,7 @@ useEffect(() => {
 
   const handleHangUp = () => {
     if (window.confirm("Are you sure you want to hang up?")) {
+      if (synthRef.current.speaking) synthRef.current.cancel(); // Stop AI speech
       navigate('/Aijudge');
     }
   };
@@ -127,35 +126,33 @@ useEffect(() => {
         const updatedAI = [aiEntry, ...aiTranscripts];
         setAITranscripts(updatedAI);
         updateSummaries(updatedUser, updatedAI);
-console.log("🧠 AI Text to save:", aiText);
-console.log("📤 PATCH Payload: userdata", {
-  email,
-  topic: debateTopic,
-  debateType: debateType,
-  stance: userStance,
-  userrole: userRole,
-  userTranscript: [text],
-  userSummary: userSummaryPoints,
-  aiTranscript: [aiText],
-  aiSummary: aiSummaryPoints
-});
 
-       await axios.patch(url+'/api/userdata', {
-  email,
-  entry: {
-    topic: debateTopic,
-    debateType: debateType,
-    stance: userStance,
-    userrole: userRole,
-    userTranscript: [text],
-    aiTranscript: [aiText],
-    userSummary: userSummaryPoints,
-    aiSummary: aiSummaryPoints
-  }
-});
+        console.log("🧠 AI Text to save:", aiText);
+        console.log("📤 PATCH Payload: userdata", {
+          email,
+          topic: debateTopic,
+          debateType: debateType,
+          stance: userStance,
+          userrole: userRole,
+          userTranscript: [text],
+          userSummary: userSummaryPoints,
+          aiTranscript: [aiText],
+          aiSummary: aiSummaryPoints
+        });
 
-
-
+        await axios.patch(url+'/api/userdata', {
+          email,
+          entry: {
+            topic: debateTopic,
+            debateType: debateType,
+            stance: userStance,
+            userrole: userRole,
+            userTranscript: [text],
+            aiTranscript: [aiText],
+            userSummary: userSummaryPoints,
+            aiSummary: aiSummaryPoints
+          }
+        });
 
         const lines = aiText.split(/[.?!]\s+/).filter(line => line.trim() !== '');
         setCaptionLines(lines);
@@ -194,72 +191,29 @@ console.log("📤 PATCH Payload: userdata", {
     synthRef.current.speak(utterance);
   };
 
-  const updateSummaries = async (userData, aiData, text, aiText) => {
-  try {
-    const res = await axios.post(url+'/api/summarize-transcripts', {
-      userTranscripts: userData,
-      aiTranscripts: aiData
-    });
+  const updateSummaries = async (userData, aiData) => {
+    try {
+      const res = await axios.post(url+'/api/summarize-transcripts', {
+        userTranscripts: userData,
+        aiTranscripts: aiData
+      });
 
-    const userSummaryArr = res.data.userSummary
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p);
+      const userSummaryArr = res.data.userSummary
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p);
 
-    const aiSummaryArr = res.data.aiSummary
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p);
+      const aiSummaryArr = res.data.aiSummary
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p);
 
-    setUserSummaryPoints(userSummaryArr);
-    setAISummaryPoints(aiSummaryArr);
-
-    // Save both user and AI transcript + summary
-const aiStance = userStance === "proposition" ? "opposition" : "proposition";
-const aiRoleMap = {
-  "beginner": "lo",
-  "intermediate": "lo",
-  "extraordinary": "lo"
-};
-const aiRole = aiRoleMap[debateType] || "lo";
-// console.log("🧠 AI Text to save:", aiText);
-// console.log("📤 PATCH Payload:", {
-//   email,
-//   topic: debateTopic,
-//   debateType: debateType,
-//   stance: userStance,
-//   userrole: userRole,
-//   userTranscript: [text],
-//   userSummary: userSummaryPoints,
-//   aiStance,
-//   aiRole,
-//   aiTranscript: [aiText],
-//   aiSummary: aiSummaryPoints
-// });
-
-// await axios.patch('/api/userdata', {
-//   email,
-//   entry: {
-//     topic: debateTopic,
-//     debateType: debateType,
-//     stance: userStance,       // user's side
-//     userrole: userRole,       // user's role
-//     userTranscript: [text],
-//     userSummary: userSummaryArr,
-
-//     aiStance,                 // ✅ new
-//     aiRole,                   // ✅ new
-//     aiTranscript: [aiText],
-//     aiSummary: aiSummaryArr
-//   }
-// });
-
-
-  } catch (err) {
-    console.error("Summary error:", err);
-  }
-};
-
+      setUserSummaryPoints(userSummaryArr);
+      setAISummaryPoints(aiSummaryArr);
+    } catch (err) {
+      console.error("Summary error:", err);
+    }
+  };
 
   return (
     <div className="arina-container">
