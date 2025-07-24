@@ -3,7 +3,7 @@ import { Mic, MicOff, FileText, PhoneOff } from 'lucide-react';
 import './Arina.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+const url = 'https://debattlex.onrender.com'
 const toBoldItalic = (word) => {
   const map = {
     a: '𝐚', b: '𝐛', c: '𝐜', d: '𝐝', e: '𝐞', f: '𝐟', g: '𝐠',
@@ -61,7 +61,7 @@ const Arina = () => {
 useEffect(() => {
   if (!email) return;
   console.log("📩 Fetching entries for:", email);
-  axios.post('/api/fetchEntries', { email })
+  axios.post(url+'/api/fetchEntries', { email })
     .then(res => {
       const entries = res.data.entries;
       const keys = Object.keys(entries);
@@ -114,7 +114,7 @@ useEffect(() => {
         setIsMuted(true);
         const ai_stance = userStance === "proposition" ? "opposition" : "proposition";
 
-        const aiRes = await axios.post('/ask', {
+        const aiRes = await axios.post(url+'/ask', {
           question: text,
           topic: debateTopic,
           stance: ai_stance,
@@ -140,7 +140,7 @@ console.log("📤 PATCH Payload: userdata", {
   aiSummary: aiSummaryPoints
 });
 
-       await axios.patch('/api/userdata', {
+       await axios.patch(url+'/api/userdata', {
   email,
   entry: {
     topic: debateTopic,
@@ -196,7 +196,7 @@ console.log("📤 PATCH Payload: userdata", {
 
   const updateSummaries = async (userData, aiData, text, aiText) => {
   try {
-    const res = await axios.post('/api/summarize-transcripts', {
+    const res = await axios.post(url+'/api/summarize-transcripts', {
       userTranscripts: userData,
       aiTranscripts: aiData
     });
