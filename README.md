@@ -99,9 +99,130 @@ Debattlex/
 - **dotenv (.env)** – For managing environment variables securely
 
 
-
 ### 🧠 5. AI Judge Feedback
 - After debate ends, AI judges:
   - Analyze strength, relevance, rebuttals, and flow
   - Give **role-specific feedback** for each team member
   - Share improvement tips
+
+## 🧬 MongoDB Schema (User Entries)
+
+```js
+{
+  email: String,
+  displayName: String,
+  entries: {
+    [slug: string]: { // e.g., "ai-in-education"
+      topic: String,
+      debateType: String,  // "1v1", "3v3", "5v5"
+      stance: String,      // "proposition" or "opposition"
+      userrole: String,    // e.g., "pm", "lo", etc.
+
+      proposition: {
+        pm: {
+          prepPoints: [String],
+          transcript: String,
+          summary: String,
+          notes: String,
+          judgeFeedback: {
+            feedbackText: String,
+            logic: Number,
+            clarity: Number,
+            relevance: Number,
+            persuasiveness: Number,
+            depth: Number,
+            evidenceUsage: Number,
+            emotionalAppeal: Number,
+            rebuttalStrength: Number,
+            structure: Number,
+            overall: Number
+          }
+        },
+        dpm: { ... },
+        gw: { ... }
+      },
+
+      opposition: {
+        lo: { ... },
+        dlo: { ... },
+        ow: { ... }
+      },
+
+      winner: String,   // "proposition" or "opposition"
+```
+## 🧪 Local Development Setup
+
+Run Debattlex on your local machine with these steps:
+
+---
+
+### 🔁 1. Clone the Repository
+
+```bash
+git clone https://github.com/bhushanvs06/Debattlex.git
+cd Debattlex
+
+      reason: String    // Reason for verdict
+    }
+  }
+}
+```
+##🔐 2. Configure Server Environment
+
+In the server folder, create a .env file and add the following:
+```bash
+SARVAM_API_KEY=your_sarvam_api_key_here
+SARVAM_API_URL=[https://your-sarvam-api-url](https://api.sarvam.ai/v1/chat/completions)
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+```
+Make sure your backend is set to run on port 5000.
+
+##🧭 3. Update Frontend API URL
+In the frontend code (client/src/components/) ( Aijudge, dash, arina, arina3v3, caseprep, feedback) .jsx
+, find:
+```bash
+const url = 'https://debattlex.onrender.com';
+
+```
+to
+```bash
+const url = 'http://localhost:5000';
+
+```
+This ensures the frontend talks to your local backend.
+
+##📦 4. Install Dependencies
+Backend (Node.js + Express)
+
+```bash
+cd server
+npm install
+```
+Frontend (React)
+```bash
+cd client
+npm install
+```
+
+##▶️ 5. Start the Development Servers
+Start Backend Server
+```bash
+cd server
+npm run dev
+```
+
+Start Frontend Client
+```bash
+cd client
+npm start
+```
+
+##🌐 6. Access the Application
+Once both client and server are running:
+
+Frontend: [http://localhost:3000](http://localhost:3000)
+
+Backend API: [http://localhost:5000](http://localhost:5000)
+
+✅ Your local Debattlex setup is now live and ready to use! 🎙️💡
