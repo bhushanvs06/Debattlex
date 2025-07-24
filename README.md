@@ -112,8 +112,8 @@ Debattlex/
   email: String,
   displayName: String,
   entries: {
-    [slug: string]: { // e.g., "ai-in-education"
-      topic: String,
+    [slug: string]: { // e.g., "ai_in_education"
+      topic: String, // e.g., "ai in education"
       debateType: String,  // "1v1", "3v3", "5v5"
       stance: String,      // "proposition" or "opposition"
       userrole: String,    // e.g., "pm", "lo", etc.
@@ -169,7 +169,7 @@ cd Debattlex
 In the server folder, create a .env file and add the following:
 ```bash
 SARVAM_API_KEY=your_sarvam_api_key_here
-SARVAM_API_URL=[https://api.sarvam.ai/v1/chat/completions](https://api.sarvam.ai/v1/chat/completions)
+SARVAM_API_URL=https://api.sarvam.ai/v1/chat/completions
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 ```
