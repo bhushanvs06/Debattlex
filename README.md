@@ -149,6 +149,8 @@ Debattlex/
       },
 
       winner: String,   // "proposition" or "opposition"
+      reason : String
+}
 ```
 ## 🧪 Local Development Setup
 
