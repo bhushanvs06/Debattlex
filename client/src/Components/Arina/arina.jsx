@@ -149,7 +149,8 @@ console.log("📤 PATCH Payload: userdata", {
     userrole: userRole,
     userTranscript: [text],
     aiTranscript: [aiText],
-
+    userSummary: userSummaryPoints,
+    aiSummary: aiSummaryPoints
   }
 });
 
