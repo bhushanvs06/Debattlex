@@ -8,8 +8,8 @@ Debattlex is a real-time AI-powered debate platform where users can engage in st
 
  
 **Login Credentials**:  
-- 📧 **Email**: `aniketsonone2908@gmail.com`  
-- 🔒 **Password**: `12345678`  
+- 📧 **Email**: `krishna@debattlex.com`  
+- 🔒 **Password**: `radhakrishna`  
 
 ## 🔥 Features
 
