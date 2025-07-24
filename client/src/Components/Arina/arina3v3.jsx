@@ -345,7 +345,7 @@ const DebateUI = () => {
       setTimeout(() => {
         const exitBtn = document.querySelector('.hangup');
         if (exitBtn) exitBtn.click();
-        window.location.href = "/aijudge";
+        navigate('/aijudge');
       }, 10000);
       return;
     }
