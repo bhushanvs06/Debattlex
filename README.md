@@ -161,25 +161,21 @@ Run Debattlex on your local machine with these steps:
 ```bash
 git clone https://github.com/bhushanvs06/Debattlex.git
 cd Debattlex
-
-      reason: String    // Reason for verdict
-    }
-  }
-}
 ```
 ##🔐 2. Configure Server Environment
 
 In the server folder, create a .env file and add the following:
 ```bash
 SARVAM_API_KEY=your_sarvam_api_key_here
-SARVAM_API_URL=[https://your-sarvam-api-url](https://api.sarvam.ai/v1/chat/completions)
+SARVAM_API_URL=[https://api.sarvam.ai/v1/chat/completions](https://api.sarvam.ai/v1/chat/completions)
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 ```
 Make sure your backend is set to run on port 5000.
 
 ##🧭 3. Update Frontend API URL
-In the frontend code (client/src/components/) ( Aijudge, dash, arina, arina3v3, caseprep, feedback) .jsx
+In the frontend code (client/src/components/) 
+( Aijudge, dash, arina, arina3v3, caseprep, feedback) .jsx
 , find:
 ```bash
 const url = 'https://debattlex.onrender.com';
