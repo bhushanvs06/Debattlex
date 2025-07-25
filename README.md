@@ -11,6 +11,11 @@ Debattlex is a real-time AI-powered debate platform where users can engage in st
 - 📧 **Email**: `krishna@debattlex.com`  
 - 🔒 **Password**: `radhakrishna`  
 
+
+## 🚀 Demo Video
+
+🔗 [Click here Watch](https://youtu.be/dJw6kCNbuCg)  
+
 ## 🔥 Features
 
 - 🎤 **Real-time Speech Recognition**: Live voice-to-text for user inputs.
