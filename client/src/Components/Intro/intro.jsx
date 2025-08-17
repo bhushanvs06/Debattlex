@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Mic, Users, Brain, Trophy, ArrowRight, Play, Zap, MessageSquare } from 'lucide-react';
 import './intro.css'
+import { useNavigate } from 'react-router-dom';
 const DebattlexIntro = () => {
   const [isVisible, setIsVisible] = useState(false);
-
+    const navigate = useNavigate()
   useEffect(() => {
     // Add external CSS link to document head
     const link = document.createElement('link');
@@ -25,7 +26,7 @@ const DebattlexIntro = () => {
   };
 
   const handleDebateNow = () => {
-    window.open('https://debattlexfrontend.onrender.com/', '_blank');
+    navigate('/login')
   };
 
   const handleWatchDemo = () => {
