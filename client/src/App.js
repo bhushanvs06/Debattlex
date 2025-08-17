@@ -11,7 +11,8 @@ import AIJudge from './Components/Aijudge/Aijudge.jsx'
 import TalkingAvatar from './Components/Arina/avatar/TalkingAvatar.jsx'
 import DebateRoom from './Components/Arina/arina3v3.jsx'
 import DebatePrep1 from './Components/Caseprep/DebatePrep1.jsx'
-
+import Ranking from './Components/Ranking/Ranking.jsx'
+import IntroWebsite from './Components/Intro/intro.jsx'
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("userEmail"));
   const [showStepper, setShowStepper] = useState(true);
@@ -51,6 +52,8 @@ function App() {
         <Link to='talkai'></Link>
         <Link to="arina3v3"></Link>
         <Link to="caseprep"></Link>
+        <Link to="ranking"></Link>
+        <Link to="intro"></Link>
 
       </nav>
 
@@ -111,6 +114,12 @@ function App() {
             isLoggedIn ? <FeedbackPage /> : <Navigate to="/login" />
           }
         /> 
+        <Route
+          path="overview/ranking"
+          element={
+            isLoggedIn ? <Ranking /> : <Navigate to="/login" />
+          }
+        /> 
          <Route
           path="arina3v3"
           element={
@@ -122,7 +131,11 @@ function App() {
           element={
             isLoggedIn ? <DebatePrep1 /> : <Navigate to="/login" />
           }
-        />         
+        />
+         <Route
+          path="intro"
+          element={ <IntroWebsite/>}
+        />             
 
       </Routes>
   
