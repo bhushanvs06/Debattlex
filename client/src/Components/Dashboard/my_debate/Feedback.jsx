@@ -108,12 +108,12 @@ const FeedbackPage = () => {
         <aside className="sidebar">
           <div className="sidebar-header">
             <h1 className="app-title">
-              <span className="title-debate">Debatle</span>
+              <span className="title-debate">Debattlex</span>
             </h1>
           </div>
 
           <nav className="sidebar-nav">
-            {["Overview",  "Feedback"].map((label) => (
+            {["Overview","Ranking", "feedbackpage"].map((label) => (
               <button
                 key={label}
                 className={`nav-item ${activeNav === label ? "active" : ""}`}
