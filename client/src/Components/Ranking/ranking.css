@@ -1,0 +1,363 @@
+/* ranking.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Simplified Animations - Removed most infinite loops to reduce lag */
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(80px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.05);
+  }
+}
+
+.ranking-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0715 0%, #1a0b2e 25%, #2d1b69 50%, #1e1b4b 75%, #0f0715 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: white;
+  padding: 2rem;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Removed floating background elements to reduce rendering overhead */
+
+.ranking-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.ranking-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 3rem;
+  background: linear-gradient(45deg, #9333ea 0%, #a855f7 25%, #c084fc 50%, #e879f9 75%, #f0abfc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+/* Removed sparkle effects */
+
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 1rem;
+  color: #fecaca;
+  font-size: 1.1rem;
+}
+
+.podium-container {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  margin-bottom: 4rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.podium-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.podium-user.first {
+  animation: slideUp 1s ease-out 0s both;
+}
+
+.podium-user.second {
+  animation: slideUp 1s ease-out 0.3s both;
+}
+
+.podium-user.third {
+  animation: slideUp 1s ease-out 0.6s both;
+}
+
+.podium-card {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.15) 0%, rgba(79, 70, 229, 0.1) 50%, rgba(99, 102, 241, 0.15) 100%);
+  /* Removed backdrop-filter to improve performance */
+  border: 2px solid rgba(168, 85, 247, 0.3);
+  border-radius: 1.5rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  min-width: 200px;
+  transform: translateY(-20px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Removed shimmer and complex hover effects */
+
+.podium-card:hover {
+  transform: translateY(-35px) scale(1.08);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  border-color: rgba(168, 85, 247, 0.6);
+}
+
+.podium-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.podium-rank {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(45deg, #9333ea, #c084fc, #e879f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+}
+
+.podium-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.podium-stats {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.podium-base {
+  width: 140px;
+  border-radius: 0.8rem 0.8rem 0 0;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  position: relative;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.8);
+  transition: all 0.3s ease;
+}
+
+/* Removed pseudo-elements for bases */
+
+.podium-base.first {
+  height: 220px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffc107 100%);
+}
+
+.podium-base.second {
+  height: 170px;
+  background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 50%, #d4d4d8 100%);
+}
+
+.podium-base.third {
+  height: 140px;
+  background: linear-gradient(135deg, #cd7f32 0%, #daa520 50%, #b8860b 100%);
+}
+
+.other-rankings {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(79, 70, 229, 0.05) 100%);
+  /* Removed backdrop-filter */
+  border: 2px solid rgba(168, 85, 247, 0.2);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Removed pseudo-elements */
+
+.other-rankings-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 0.8rem;
+}
+
+.other-rankings-icon {
+  font-size: 2rem;
+}
+
+.other-rankings-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(45deg, #9333ea, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rankings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(147, 51, 234, 0.05) 100%);
+  border: 1.5px solid rgba(168, 85, 247, 0.15);
+  border-radius: 1rem;
+  transition: all 0.4s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Removed complex hover animations */
+
+.ranking-item:nth-child(1) { animation: slideInLeft 0.8s ease-out 0.5s both; }
+.ranking-item:nth-child(2) { animation: slideInLeft 0.8s ease-out 0.7s both; }
+.ranking-item:nth-child(3) { animation: slideInLeft 0.8s ease-out 0.9s both; }
+.ranking-item:nth-child(4) { animation: slideInLeft 0.8s ease-out 1.1s both; }
+.ranking-item:nth-child(5) { animation: slideInLeft 0.8s ease-out 1.3s both; }
+
+.ranking-item:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.15) 0%, rgba(79, 70, 229, 0.1) 100%);
+  transform: translateX(15px) scale(1.02);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 10px 30px rgba(147, 51, 234, 0.2);
+}
+
+.ranking-item-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.ranking-number {
+  background: linear-gradient(45deg, #7c3aed, #a855f7, #c084fc);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
+  transition: all 0.3s ease;
+}
+
+.ranking-item:hover .ranking-number {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.6);
+}
+
+.ranking-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-username {
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 0.3rem;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ranking-user-stats {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.ranking-winrate {
+  background: linear-gradient(45deg, #059669, #10b981, #34d399);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.ranking-item:hover .ranking-winrate {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+/* Removed sparkle effects */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ranking-container {
+    padding: 1rem;
+  }
+  
+  .ranking-title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .podium-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .podium-user {
+    margin-bottom: 2rem;
+  }
+  
+  .other-rankings {
+    padding: 1.5rem;
+  }
+  
+  .ranking-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .ranking-item-left {
+    flex-direction: column;
+    text-align: center;
+  }
+}
