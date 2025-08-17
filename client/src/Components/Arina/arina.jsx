@@ -3,7 +3,11 @@ import { Mic, MicOff, FileText, PhoneOff } from 'lucide-react';
 import './Arina.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-const url = 'https://debattlex.onrender.com'
+import { SarvamAIClient } from 'sarvamai';
+
+const url = 'https://debattlex.onrender.com';
+const SARVAM_API_KEY = 'sk_qti82pt3_7Ho0xwKr7RPgF7UCm4z7xVMf'; // Your Sarvam API key
+
 const toBoldItalic = (word) => {
   const map = {
     a: '𝐚', b: '𝐛', c: '𝐜', d: '𝐝', e: '𝐞', f: '𝐟', g: '𝐠',
@@ -19,11 +23,11 @@ const toBoldItalic = (word) => {
 };
 
 const highlightImportant = (text) => {
-  return text.split(" ").map(word => {
+  return text.split(' ').map(word => {
     const strippedWord = word.replace(/[\*#]/g, '');
     const clean = strippedWord.replace(/[^a-zA-Z]/g, '');
-    return clean.toLowerCase() === "important" ? toBoldItalic(strippedWord) : strippedWord;
-  }).join(" ");
+    return clean.toLowerCase() === 'important' ? toBoldItalic(strippedWord) : strippedWord;
+  }).join(' ');
 };
 
 const Arina = () => {
@@ -42,55 +46,136 @@ const Arina = () => {
   const [captionLineIndex, setCaptionLineIndex] = useState(0);
   const [highlightedWordIndex, setHighlightedWordIndex] = useState(0);
   const [userRole, setUserRole] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentUserTranscript, setCurrentUserTranscript] = useState('');
+  const [userCaption, setUserCaption] = useState('');
 
-
-  const synthRef = useRef(window.speechSynthesis);
   const recognitionRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const currentSourceRef = useRef(null);
+  const videoRef = useRef(null);
   const navigate = useNavigate();
+  const sarvamClient = useRef(new SarvamAIClient({ apiSubscriptionKey: SARVAM_API_KEY }));
 
   useEffect(() => {
-
-    const storedEmail = localStorage.getItem("userEmail");
+    const storedEmail = localStorage.getItem('userEmail');
     if (!storedEmail) {
-      alert("User email not found. Please log in again.");
+      alert('User email not found. Please log in again.');
       navigate('/login');
       return;
     }
     setEmail(storedEmail);
-  }, []);
-useEffect(() => {
-  if (!email) return;
-  console.log("📩 Fetching entries for:", email);
-  axios.post(url+'/api/fetchEntries', { email })
-    .then(res => {
-      const entries = res.data.entries;
-      const keys = Object.keys(entries);
-      if (keys.length > 0) {
-        const latestKey = keys[keys.length - 1];
-        const latestEntry = entries[latestKey];
-        console.log("📌 Latest Entry:", latestEntry);
-        setDebateTopic(latestEntry.topic);
-        setUserStance(latestEntry.stance);
-        setDebateType(latestEntry.type);
-        setUserRole(latestEntry.userrole);  // ✅ add this line
-      } else {
-        console.warn("⚠️ No entries found for user.");
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!email) return;
+    console.log('📩 Fetching entries for:', email);
+    axios
+      .post(url + '/api/fetchEntries', { email })
+      .then(res => {
+        const entries = res.data.entries;
+        const keys = Object.keys(entries);
+        if (keys.length > 0) {
+          const latestKey = keys[keys.length - 1];
+          const latestEntry = entries[latestKey];
+          console.log('📌 Latest Entry:', latestEntry);
+          setDebateTopic(latestEntry.topic);
+          setUserStance(latestEntry.stance);
+          setDebateType(latestEntry.type);
+          setUserRole(latestEntry.userrole);
+        } else {
+          console.warn('⚠️ No entries found for user.');
+        }
+      })
+      .catch(err => console.error('❌ Failed to fetch entry:', err));
+  }, [email]);
+
+  const toggleMute = async () => {
+    // Initialize or resume AudioContext on user gesture
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    if (isSpeaking) {
+      if (currentSourceRef.current) {
+        currentSourceRef.current.onended = null; // Prevent chaining to next line
+        currentSourceRef.current.stop();
+        currentSourceRef.current = null;
       }
-    })
-    .catch(err => console.error("❌ Failed to fetch entry:", err));
-}, [email]);
+      setIsSpeaking(false);
+    }
 
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
 
-  const toggleMute = () => {
-    if (synthRef.current.speaking) synthRef.current.cancel();
-    setIsMuted(!isMuted);
+    if (newMuted) {
+      // User is done speaking, send transcript to AI
+      const text = currentUserTranscript.trim();
+      setCurrentUserTranscript('');
+      setUserCaption('');
+      if (text === '') return;
+
+      const userEntry = { speaker: 'You', text };
+      const updatedUser = [userEntry, ...userTranscripts];
+      setUserTranscripts(updatedUser);
+
+      try {
+        const ai_stance = userStance === 'proposition' ? 'opposition' : 'proposition';
+
+        // Limit the transcripts sent to prevent prompt too long error
+        const limitedTranscripts = updatedUser.slice(0, 5); // Send only the last 5 user transcripts
+
+        const aiRes = await axios.post(url + '/ask', {
+          question: text,
+          topic: debateTopic,
+          stance: ai_stance,
+          type: debateType,
+          transcripts: limitedTranscripts,
+        });
+
+        const aiText = aiRes.data.answer.replace(/[\*#]/g, '');
+        const aiEntry = { speaker: 'AI', text: aiText };
+        const updatedAI = [aiEntry, ...aiTranscripts];
+        setAITranscripts(updatedAI);
+        updateSummaries(updatedUser, updatedAI);
+
+        await axios.patch(url + '/api/userdata', {
+          email,
+          entry: {
+            topic: debateTopic,
+            debateType: debateType,
+            stance: userStance,
+            userrole: userRole,
+            userTranscript: [text],
+            aiTranscript: [aiText],
+            userSummary: userSummaryPoints,
+            aiSummary: aiSummaryPoints,
+          },
+        });
+
+        const lines = aiText.split(/[.?!]\s+/).filter(line => line.trim() !== '');
+        setCaptionLines(lines);
+        setCaptionLineIndex(0);
+        setHighlightedWordIndex(0);
+        speakCaptionLines(lines, 0);
+      } catch (err) {
+        console.error('AI response error:', err);
+      }
+    } else {
+      // User is starting to speak
+      setCurrentUserTranscript('');
+      setUserCaption('');
+    }
   };
 
   const toggleTranscript = () => setShowTranscript(!showTranscript);
   const toggleCaptions = () => setShowCaptions(!showCaptions);
 
   const handleHangUp = () => {
-    if (window.confirm("Are you sure you want to hang up?")) {
+    if (window.confirm('Are you sure you want to hang up?')) {
       navigate('/Aijudge');
     }
   };
@@ -101,165 +186,163 @@ useEffect(() => {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
     recognitionRef.current = recognition;
 
-    recognition.onresult = async (event) => {
-      const text = Array.from(event.results).map(r => r[0].transcript).join('');
-      const userEntry = { speaker: "You", text };
-      const updatedUser = [userEntry, ...userTranscripts];
-      setUserTranscripts(updatedUser);
-
-      try {
-        setIsMuted(true);
-        const ai_stance = userStance === "proposition" ? "opposition" : "proposition";
-
-        const aiRes = await axios.post(url+'/ask', {
-          question: text,
-          topic: debateTopic,
-          stance: ai_stance,
-          type: debateType,
-          transcripts: updatedUser
-        });
-
-        const aiText = aiRes.data.answer.replace(/[\*#]/g, '');
-        const aiEntry = { speaker: "AI", text: aiText };
-        const updatedAI = [aiEntry, ...aiTranscripts];
-        setAITranscripts(updatedAI);
-        updateSummaries(updatedUser, updatedAI);
-console.log("🧠 AI Text to save:", aiText);
-console.log("📤 PATCH Payload: userdata", {
-  email,
-  topic: debateTopic,
-  debateType: debateType,
-  stance: userStance,
-  userrole: userRole,
-  userTranscript: [text],
-  userSummary: userSummaryPoints,
-  aiTranscript: [aiText],
-  aiSummary: aiSummaryPoints
-});
-
-       await axios.patch(url+'/api/userdata', {
-  email,
-  entry: {
-    topic: debateTopic,
-    debateType: debateType,
-    stance: userStance,
-    userrole: userRole,
-    userTranscript: [text],
-    aiTranscript: [aiText],
-    userSummary: userSummaryPoints,
-    aiSummary: aiSummaryPoints
-  }
-});
-
-
-
-
-        const lines = aiText.split(/[.?!]\s+/).filter(line => line.trim() !== '');
-        setCaptionLines(lines);
-        setCaptionLineIndex(0);
-        setHighlightedWordIndex(0);
-        speakCaptionLines(lines, 0);
-      } catch (err) {
-        console.error("AI response error:", err);
+    recognition.onresult = event => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript + ' ';
+        }
       }
+      if (finalTranscript) {
+        setCurrentUserTranscript(prev => prev + finalTranscript);
+      }
+      setUserCaption((currentUserTranscript + finalTranscript + interimTranscript).trim());
     };
 
     if (!isMuted) recognition.start();
     else recognition.stop();
 
     return () => recognition.stop();
-  }, [isMuted, email, debateTopic, userStance, debateType, userTranscripts, aiTranscripts]);
+  }, [isMuted, currentUserTranscript]);
 
-  const speakCaptionLines = (lines, index) => {
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isSpeaking) {
+      videoRef.current.play().catch(() => { /* Ignore interruption errors */ });
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isSpeaking]);
+
+  const speakCaptionLines = async (lines, index) => {
     if (index >= lines.length) {
       setIsMuted(false);
+      setIsSpeaking(false);
       return;
     }
 
     const line = lines[index].replace(/[\*#]/g, '');
-    const utterance = new SpeechSynthesisUtterance(line);
     setCaptionLineIndex(index);
     setHighlightedWordIndex(0);
 
-    utterance.onboundary = (event) => {
-      if (event.name === 'word') {
-        setHighlightedWordIndex(prev => prev + 1);
-      }
-    };
+    try {
+      setIsSpeaking(true);
+      const response = await sarvamClient.current.textToSpeech.convert({
+        text: line,
+        target_language_code: 'en-IN',
+        speaker: 'manisha',
+        pitch: 0.3,
+        pace: 0.85,
+        loudness: 1.2,
+        speech_sample_rate: 24000,
+        enable_preprocessing: true,
+        model: 'bulbul:v2',
+      });
 
-    utterance.onend = () => speakCaptionLines(lines, index + 1);
-    synthRef.current.speak(utterance);
+      const base64Audio = response.audios?.[0];
+      if (!base64Audio) {
+        console.error('No audio data in response');
+        setIsSpeaking(false);
+        speakCaptionLines(lines, index + 1);
+        return;
+      }
+
+      const byteCharacters = atob(base64Audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const arrayBuffer = byteArray.buffer;
+
+      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+      const source = audioContextRef.current.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContextRef.current.destination);
+      currentSourceRef.current = source;
+
+      const words = line.split(' ');
+      const durationPerWord = (audioBuffer.duration || 1) * 1000 / words.length;
+      let wordIndex = 0;
+      const interval = setInterval(() => {
+        setHighlightedWordIndex(wordIndex);
+        wordIndex++;
+        if (wordIndex >= words.length) clearInterval(interval);
+      }, durationPerWord);
+
+      source.onended = () => {
+        clearInterval(interval);
+        currentSourceRef.current = null;
+        speakCaptionLines(lines, index + 1);
+      };
+
+      source.start();
+    } catch (error) {
+      console.error('TTS Error:', error);
+      setIsSpeaking(false);
+      speakCaptionLines(lines, index + 1);
+    }
   };
 
-  const updateSummaries = async (userData, aiData, text, aiText) => {
-  try {
-    const res = await axios.post(url+'/api/summarize-transcripts', {
-      userTranscripts: userData,
-      aiTranscripts: aiData
-    });
+  const updateSummaries = async (userData, aiData) => {
+    try {
+      // Also limit for summaries to prevent potential similar errors
+      const limitedUserData = userData.slice(0, 5);
+      const limitedAiData = aiData.slice(0, 5);
 
-    const userSummaryArr = res.data.userSummary
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p);
+      const res = await axios.post(url + '/api/summarize-transcripts', {
+        userTranscripts: limitedUserData,
+        aiTranscripts: limitedAiData,
+      });
 
-    const aiSummaryArr = res.data.aiSummary
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p);
+      const userSummaryArr = res.data.userSummary
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p);
 
-    setUserSummaryPoints(userSummaryArr);
-    setAISummaryPoints(aiSummaryArr);
+      const aiSummaryArr = res.data.aiSummary
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p);
 
-    // Save both user and AI transcript + summary
-const aiStance = userStance === "proposition" ? "opposition" : "proposition";
-const aiRoleMap = {
-  "beginner": "lo",
-  "intermediate": "lo",
-  "extraordinary": "lo"
-};
-const aiRole = aiRoleMap[debateType] || "lo";
-// console.log("🧠 AI Text to save:", aiText);
-// console.log("📤 PATCH Payload:", {
-//   email,
-//   topic: debateTopic,
-//   debateType: debateType,
-//   stance: userStance,
-//   userrole: userRole,
-//   userTranscript: [text],
-//   userSummary: userSummaryPoints,
-//   aiStance,
-//   aiRole,
-//   aiTranscript: [aiText],
-//   aiSummary: aiSummaryPoints
-// });
+      setUserSummaryPoints(userSummaryArr);
+      setAISummaryPoints(aiSummaryArr);
 
-// await axios.patch('/api/userdata', {
-//   email,
-//   entry: {
-//     topic: debateTopic,
-//     debateType: debateType,
-//     stance: userStance,       // user's side
-//     userrole: userRole,       // user's role
-//     userTranscript: [text],
-//     userSummary: userSummaryArr,
+      const aiStance = userStance === 'proposition' ? 'opposition' : 'proposition';
+      const aiRoleMap = {
+        beginner: 'lo',
+        intermediate: 'lo',
+        extraordinary: 'lo',
+      };
+      const aiRole = aiRoleMap[debateType] || 'lo';
 
-//     aiStance,                 // ✅ new
-//     aiRole,                   // ✅ new
-//     aiTranscript: [aiText],
-//     aiSummary: aiSummaryArr
-//   }
-// });
-
-
-  } catch (err) {
-    console.error("Summary error:", err);
-  }
-};
-
+      await axios.patch(url + '/api/userdata', {
+        email,
+        entry: {
+          topic: debateTopic,
+          debateType: debateType,
+          stance: userStance,
+          userrole: userRole,
+          userTranscript: userData.map(t => t.text),
+          userSummary: userSummaryArr,
+          aiStance,
+          aiRole,
+          aiTranscript: aiData.map(t => t.text),
+          aiSummary: aiSummaryArr,
+        },
+      });
+    } catch (err) {
+      console.error('Summary error:', err);
+    }
+  };
 
   return (
     <div className="arina-container">
@@ -269,14 +352,18 @@ const aiRole = aiRoleMap[debateType] || "lo";
 
       <div className="arina-center">
         <div className="avatar-container">
-          <div className="ai-avatar">
-            <svg className="tick-icon" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-            </svg>
-          </div>
+          <video
+            ref={videoRef}
+            className="speaking-video"
+            src="/girl1.mp4"
+            loop
+            muted
+            playsInline
+          />
         </div>
-        <h1 className="ai-heading">Live AI Debate</h1>
+        
         <div className="line-divider"></div>
+        <br></br>
       </div>
 
       <div className={`transcript-panel left-panel ${showTranscript ? 'open' : ''}`}>
@@ -290,6 +377,7 @@ const aiRole = aiRoleMap[debateType] || "lo";
               <li key={idx}>{highlightImportant(point.replace(/^[-•]\s*/, ''))}</li>
             ))}
           </ul>
+          <br></br>
         </div>
       </div>
 
@@ -307,27 +395,33 @@ const aiRole = aiRoleMap[debateType] || "lo";
         </div>
       </div>
 
-      {showCaptions && captionLines.length > 0 && (
+      {showCaptions && (
         <div className="caption-line global-caption">
-          {captionLines[captionLineIndex].split(" ").map((word, idx) => {
-            let displayWord = word.replace(/[\*#]/g, '');
-            const clean = displayWord.replace(/[^a-zA-Z]/g, '');
-            if (clean.toLowerCase() === "important") {
-              displayWord = toBoldItalic(displayWord);
-            }
-            return (
-              <span
-                key={idx}
-                style={{
-                  color: idx === highlightedWordIndex ? 'yellow' : 'white',
-                  fontWeight: idx === highlightedWordIndex ? 'bold' : 'normal',
-                  marginRight: '4px',
-                }}
-              >
-                {displayWord}
-              </span>
-            );
-          })}
+          {!isMuted && userCaption && `You: ${userCaption}`}
+          {isSpeaking && captionLines.length > 0 && (
+            <>
+              AI:{' '}
+              {captionLines[captionLineIndex].split(' ').map((word, idx) => {
+                let displayWord = word.replace(/[\*#]/g, '');
+                const clean = displayWord.replace(/[^a-zA-Z]/g, '');
+                if (clean.toLowerCase() === 'important') {
+                  displayWord = toBoldItalic(displayWord);
+                }
+                return (
+                  <span
+                    key={idx}
+                    style={{
+                      color: idx === highlightedWordIndex ? 'yellow' : 'white',
+                      fontWeight: idx === highlightedWordIndex ? 'bold' : 'normal',
+                      marginRight: '4px',
+                    }}
+                  >
+                    {displayWord}
+                  </span>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
 
