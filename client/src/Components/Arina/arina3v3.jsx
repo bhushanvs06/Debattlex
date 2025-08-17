@@ -1,10 +1,17 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, FileText, PhoneOff, Notebook } from 'lucide-react';
 import './DebateUI.css';
 import { useNavigate } from 'react-router-dom';
-const url =  'https://debattlex.onrender.com'
+import { SarvamAIClient } from "sarvamai";
+import { FaClosedCaptioning } from "react-icons/fa";
+import { FaRegClosedCaptioning } from "react-icons/fa";
+import { FaRegFileAlt } from "react-icons/fa";
 
+const url = 'https://debattlex.onrender.com';
+
+const client = new SarvamAIClient({
+  apiSubscriptionKey: "sk_qti82pt3_7Ho0xwKr7RPgF7UCm4z7xVMf"
+});
 
 const toBoldItalic = (word) => {
   const map = {
@@ -18,14 +25,6 @@ const toBoldItalic = (word) => {
     V: '𝐕', W: '𝐖', X: '𝐗', Y: '𝐘', Z: '𝐙'
   };
   return word.split('').map(c => map[c] || c).join('');
-};
-
-const highlightImportant = (text) => {
-  return text.split(" ").map(word => {
-    const strippedWord = word.replace(/[\*#]/g, '');
-    const clean = strippedWord.replace(/[^a-zA-Z]/g, '');
-    return clean.toLowerCase() === "important" ? toBoldItalic(strippedWord) : strippedWord;
-  }).join(" ");
 };
 
 const DebateUI = () => {
@@ -53,7 +52,8 @@ const DebateUI = () => {
   const navigate = useNavigate();
 
   const recognitionRef = useRef(null);
-  const utteranceRef = useRef(null);
+  const currentAudioRef = useRef(null);
+  const videoRef = useRef(null);
   const [allPrep, setAllPrep] = useState({
     PM: "",
     DPM: "",
@@ -62,6 +62,27 @@ const DebateUI = () => {
     DLO: "",
     OW: ""
   });
+
+  const voiceMap = {
+    PM: 'abhilash',
+    DPM: 'karun',
+    GW: 'hitesh',
+    LO: 'anushka',
+    DLO: 'manisha',
+    OW: 'arya'
+  };
+
+  const propVideoMap = {
+    PM: '/boy1.mp4',
+    DPM: '/boy2.mp4',
+    GW: '/boy3.mp4'
+  };
+
+  const oppVideoMap = {
+    LO: '/girl1.mp4',
+    DLO: '/girl2.mp4',
+    OW: '/girl3.mp4'
+  };
 
   const saveToMongo = async ({ transcript, summary, speaker }) => {
     try {
@@ -153,7 +174,8 @@ const DebateUI = () => {
           role: role.toUpperCase(),
           team: 'prop',
           prep: proposition[role]?.prep || "",
-          avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 90)}.jpg`
+          avatar: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 90)}.jpg`,
+          video: propVideoMap[role.toUpperCase()]
         }));
 
         const oppMembers = Object.keys(opposition).map(role => ({
@@ -161,7 +183,8 @@ const DebateUI = () => {
           role: role.toUpperCase(),
           team: 'opp',
           prep: opposition[role]?.prep || "",
-          avatar: `https://randomuser.me/api/portraits/women/${Math.floor(Math.random() * 90)}.jpg`
+          avatar: `https://randomuser.me/api/portraits/women/${Math.floor(Math.random() * 90)}.jpg`,
+          video: oppVideoMap[role.toUpperCase()]
         }));
 
         const roleOrder = ["PM", "LO", "DPM", "DLO", "GW", "OW"];
@@ -232,7 +255,13 @@ const DebateUI = () => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (utteranceRef.current) speechSynthesis.cancel();
+          if (currentAudioRef.current) {
+            currentAudioRef.current.pause();
+            currentAudioRef.current = null;
+          }
+          if (videoRef.current) {
+            videoRef.current.pause();
+          }
 
           if (isUserTurn && userTranscript.trim()) {
             const tempTranscript = userTranscript.trim();
@@ -331,11 +360,30 @@ const DebateUI = () => {
   }, [triggerNextAISpeech, currentSpeakerIndex, debateStarted]);
 
   function hangupclick() {
-    if (speechSynthesis.speaking) speechSynthesis.cancel();
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
     navigate('/aijudge');
   }
 
   const nextSpeaker = () => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    if (recognitionRef.current && isUserTurn) {
+      recognitionRef.current.stop();
+    }
+    setIsSpeaking(false);
+    setIsMuted(true);
+
     const nextIndex = currentSpeakerIndex + 1;
 
     if (nextIndex >= allSpeakers.length) {
@@ -355,40 +403,105 @@ const DebateUI = () => {
     setCaptionLines([]);
     setCaptionLineIndex(0);
     setHighlightedWordIndex(0);
-    setIsSpeaking(false);
     setTriggerNextAISpeech(true);
   };
 
-  const speakText = (lines, index) => {
+  const speakText = async (lines, index) => {
     if (index >= lines.length || !lines[index]) {
       setIsSpeaking(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
       return;
     }
 
     const line = lines[index].replace(/[\*#]/g, '');
-    const utter = new SpeechSynthesisUtterance(line);
-    utter.lang = 'en-US';
     setCaptionLineIndex(index);
     setHighlightedWordIndex(0);
 
-    utter.onboundary = (event) => {
-      if (event.name === 'word') {
-        setHighlightedWordIndex(prev => prev + 1);
-      }
-    };
+    try {
+      const speakerVoice = voiceMap[currentSpeaker.role] || 'manisha'; // fallback
+      const response = await client.textToSpeech.convert({
+        text: line,
+        target_language_code: "en-IN",
+        speaker: speakerVoice,
+        pitch: 0.1,
+        pace: 0.8,
+        loudness: 1.7,
+        speech_sample_rate: 24000,
+        enable_preprocessing: true,
+        model: "bulbul:v2"
+      });
 
-    utter.onstart = () => setIsSpeaking(true);
-    utter.onend = () => {
+      const base64Audio = response.audios?.[0];
+      if (!base64Audio) {
+        console.error("No audio data in response");
+        setIsSpeaking(false);
+        speakText(lines, index + 1);
+        return;
+      }
+
+      const byteCharacters = atob(base64Audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+
+      const audioBlob = new Blob([byteArray], { type: "audio/wav" });
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio;
+
+      const words = line.split(" ").length;
+
+      audio.addEventListener('loadedmetadata', () => {
+        const duration = audio.duration;
+        const timePerWord = (duration * 1000) / words;
+
+        let wordIndex = 0;
+        const interval = setInterval(() => {
+          setHighlightedWordIndex(wordIndex);
+          wordIndex++;
+          if (wordIndex >= words) {
+            clearInterval(interval);
+          }
+        }, timePerWord);
+
+        audio.addEventListener('ended', () => {
+          clearInterval(interval);
+          setIsSpeaking(false);
+          setHighlightedWordIndex(0);
+          if (videoRef.current) {
+            videoRef.current.pause();
+          }
+          speakText(lines, index + 1);
+        });
+
+        audio.play().then(() => {
+          setIsSpeaking(true);
+          if (videoRef.current) {
+            videoRef.current.play();
+          }
+        }).catch(err => {
+          console.error("Audio play error:", err);
+          setIsSpeaking(false);
+          clearInterval(interval);
+          speakText(lines, index + 1);
+        });
+      });
+
+      audio.addEventListener('error', (err) => {
+        console.error("Audio error:", err);
+        setIsSpeaking(false);
+        speakText(lines, index + 1);
+      });
+    } catch (error) {
+      console.error("TTS Error:", error);
       setIsSpeaking(false);
       speakText(lines, index + 1);
-    };
-    utter.onerror = (err) => {
-      console.error("Speech synthesis error:", err);
-      setIsSpeaking(false);
-    };
-    utteranceRef.current = utter;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utter);
+    }
   };
 
   const generateAISpeech = async (speaker) => {
@@ -453,6 +566,29 @@ const DebateUI = () => {
     );
   }
 
+  const currentLine = captionLines[captionLineIndex] || '';
+
+  const renderWord = (word, idx, highlightIdx) => {
+    let displayWord = word.replace(/[\*#]/g, '');
+    const clean = displayWord.replace(/[^a-zA-Z]/g, '');
+    if (clean.toLowerCase() === "important") {
+      displayWord = toBoldItalic(displayWord);
+    }
+    const isHighlight = (idx === highlightIdx) && !isUserTurn;
+    return (
+      <span
+        key={idx}
+        style={{
+          color: isHighlight ? 'yellow' : 'white',
+          fontWeight: isHighlight ? 'bold' : 'normal',
+          marginRight: '4px',
+        }}
+      >
+        {displayWord}
+      </span>
+    );
+  };
+
   return (
     <div className="debate-container">
       <div className="top-bar">
@@ -480,31 +616,32 @@ const DebateUI = () => {
         </div>
 
         <div className="center-speaker fade-in">
-          <img src={currentSpeaker.avatar} alt="Speaker" className="speaker-avatar" />
+          {!isUserTurn && (
+            <video
+              ref={videoRef}
+              src={currentSpeaker.video}
+              className="speaker-video"
+              loop
+              muted
+              playsInline
+              style={{
+                borderRadius: '20px',
+                maxWidth: '100%',
+                maxHeight: '400px',
+                objectFit: 'contain',
+                margin: '0 auto',
+                display: 'block'
+              }}
+            />
+          )}
           <h2>{currentSpeaker.name}</h2>
           <div className="role-tag">{currentSpeaker.role} Speaking</div>
-          {showCaptions && captionLines.length > 0 && captionLineIndex < captionLines.length && (
-            <div className="caption-line global-caption">
-              {captionLines[captionLineIndex].split(" ").map((word, idx) => {
-                let displayWord = word.replace(/[\*#]/g, '');
-                const clean = displayWord.replace(/[^a-zA-Z]/g, '');
-                if (clean.toLowerCase() === "important") {
-                  displayWord = toBoldItalic(displayWord);
-                }
-                return (
-                  <span
-                    key={idx}
-                    style={{
-                      color: idx === highlightedWordIndex ? 'yellow' : 'white',
-                      fontWeight: idx === highlightedWordIndex ? 'bold' : 'normal',
-                      marginRight: '4px',
-                    }}
-                  >
-                    {displayWord}
-                  </span>
-                );
-              })}
-            </div>
+          {showCaptions && currentLine && (
+            
+              <div className="caption-line">
+                {currentLine.split(" ").map((word, idx) => renderWord(word, idx, highlightedWordIndex))}
+              </div>
+           
           )}
           {isUserTurn && <div className="your-turn">🎙️ Your turn to speak</div>}
         </div>
@@ -526,20 +663,27 @@ const DebateUI = () => {
           </div>
         </div>
       </div>
-
+<center>
       <div className="control-bar">
         <button className={`circle-btn ${!isMuted ? 'speaking' : ''}`} disabled>
           {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
         </button>
-        <button className="circle-btn">
+        {/* <button className="circle-btn">
           <FileText size={20} />
-        </button>
-        <button className="circle-btn" onClick={() => setShowCaptions(!showCaptions)}>
-          {showCaptions ? 'CC Off' : 'CC On'}
-        </button>
-        <button className="circle-btn" onClick={toggleNoteTaker}>
-          {isNoteTakerOpen ? 'Close Notes' : 'Open Notes'}
-        </button>
+        </button> */}
+        <button
+  className="circle-btn"
+  onClick={() => setShowCaptions(!showCaptions)}
+>
+  {showCaptions ? (
+    <FaClosedCaptioning className="text-2xl" />
+  ) : (
+    <FaRegClosedCaptioning className="text-2xl" />
+  )}
+</button><button className="circle-btn" onClick={toggleNoteTaker}>
+  <FaRegFileAlt className="text-2xl" />
+</button>
+        
         <button className="circle-btn hangup" onClick={() => hangupclick()}>
           <PhoneOff size={20} />
         </button>
@@ -547,6 +691,7 @@ const DebateUI = () => {
           ➡️ Next
         </button>
       </div>
+      </center>
 
       <div className={`note-taker-panel ${isNoteTakerOpen ? 'open' : ''}`}>
         <div className="note-taker-header">
