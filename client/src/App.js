@@ -64,7 +64,7 @@ function App() {
         />
         <Route
           path="/"
-          element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
+          element={<IntroWebsite/>}
         />
         <Route
           path="/overview"
@@ -146,3 +146,4 @@ function App() {
 }
 
 export default App;
+
