@@ -146,7 +146,7 @@ const skillAverages = skills.map(skill => {
 });
 
 
-  const navigationItems = ['Overview', 'Feedbackpage'];
+  const navigationItems = ["Overview","Ranking", "feedbackpage"];
 
   const handleLogout = () => {
     localStorage.removeItem("userEmail");
@@ -162,7 +162,7 @@ const skillAverages = skills.map(skill => {
       <div className="sidebar">
         <div className="sidebar-header">
           <h1 className="app-title">
-            <span className="title-debate">Debatle</span>
+            <span className="title-debate">Debattlex</span>
             <span className="title-guard"></span>
           </h1>
         </div>
