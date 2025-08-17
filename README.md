@@ -157,6 +157,14 @@ Debattlex/
       reason : String
 }
 ```
+---
+
+## 📌 What's New
+- ✨ **Revamped Debate UI**: Improved layouts for both **1v1** and **3v3** debate modes with a more engaging and intuitive design.
+- 🏆 **Ranking System Added**: Track your progress with the new ranking system that records wins, debates, and performance.
+
+
+
 ## 🧪 Local Development Setup
 
 Run Debattlex on your local machine with these steps:
