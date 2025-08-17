@@ -1684,6 +1684,48 @@ app.get('/api/fetchNotes', async (req, res) => {
   }
 });
 
+//ranking
+// API Endpoint to Get Rankings
+app.get('/api/rankings', async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10000;
+  const skip = (page - 1) * limit;
+  try {
+    const users = await User.find().lean().skip(skip).limit(limit);
+    const rankings = users
+      .map(user => {
+        const entriesArray = Object.values(user.entries || {});
+        const totalDebates = entriesArray.length;
+        // Log winner and stance for debugging
+        entriesArray.forEach(e => {
+          console.log(`User: ${user.displayName}, Winner: ${e.winner || 'undefined'}, Stance: ${e.stance || 'undefined'}`);
+        });
+        const wins = entriesArray.filter(e =>
+          e.winner && e.stance &&
+          e.winner.toLowerCase() === e.stance.toLowerCase()
+        ).length;
+        console.log(`User: ${user.displayName}, Total: ${totalDebates}, Wins: ${wins}`);
+        const winRate = totalDebates > 0
+          ? Math.round((wins / totalDebates) * 100)
+          : 0;
+
+
+        return {
+          displayName: user.displayName,
+          wins,
+          totalDebates,
+          winRate
+        };
+      })
+      .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins);
+    res.json(rankings);
+  } catch (error) {
+    console.error('Error fetching rankings:', error);
+    res.status(500).json({ error: 'Failed to fetch rankings' });
+  }
+});
+
+
 // 🚀 Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
