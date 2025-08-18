@@ -407,6 +407,7 @@ const DebateUI = () => {
   };
 
   const speakText = async (lines, index) => {
+    const expectedIndex = currentSpeakerIndex;
     if (index >= lines.length || !lines[index]) {
       setIsSpeaking(false);
       if (videoRef.current) {
@@ -433,11 +434,18 @@ const DebateUI = () => {
         model: "bulbul:v2"
       });
 
+      if (currentSpeakerIndex !== expectedIndex) {
+        console.log("Stale speaker index after TTS, skipping playback");
+        return;
+      }
+
       const base64Audio = response.audios?.[0];
       if (!base64Audio) {
         console.error("No audio data in response");
         setIsSpeaking(false);
-        speakText(lines, index + 1);
+        if (currentSpeakerIndex === expectedIndex) {
+          speakText(lines, index + 1);
+        }
         return;
       }
 
@@ -476,7 +484,9 @@ const DebateUI = () => {
           if (videoRef.current) {
             videoRef.current.pause();
           }
-          speakText(lines, index + 1);
+          if (currentSpeakerIndex === expectedIndex) {
+            speakText(lines, index + 1);
+          }
         });
 
         audio.play().then(() => {
@@ -488,23 +498,30 @@ const DebateUI = () => {
           console.error("Audio play error:", err);
           setIsSpeaking(false);
           clearInterval(interval);
-          speakText(lines, index + 1);
+          if (currentSpeakerIndex === expectedIndex) {
+            speakText(lines, index + 1);
+          }
         });
       });
 
       audio.addEventListener('error', (err) => {
         console.error("Audio error:", err);
         setIsSpeaking(false);
-        speakText(lines, index + 1);
+        if (currentSpeakerIndex === expectedIndex) {
+          speakText(lines, index + 1);
+        }
       });
     } catch (error) {
       console.error("TTS Error:", error);
       setIsSpeaking(false);
-      speakText(lines, index + 1);
+      if (currentSpeakerIndex === expectedIndex) {
+        speakText(lines, index + 1);
+      }
     }
   };
 
   const generateAISpeech = async (speaker) => {
+    const expectedIndex = currentSpeakerIndex;
     try {
       const res = await fetch(url + "/api/generateAISpeech", {
         method: 'POST',
@@ -512,6 +529,10 @@ const DebateUI = () => {
         body: JSON.stringify({ role: speaker.role, team: speaker.team, topic })
       });
       const data = await res.json();
+      if (currentSpeakerIndex !== expectedIndex) {
+        console.log("Stale speaker index after generating speech, skipping");
+        return;
+      }
       if (!data.transcript) {
         console.warn("No transcript received from API");
         return;
