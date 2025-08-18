@@ -30,7 +30,7 @@ const DebattlexIntro = () => {
   };
 
   const handleWatchDemo = () => {
-    window.open('https://youtu.be/dJw6kCNbuCg', '_blank');
+    window.open('https://youtu.be/31TrWEnwFSg', '_blank');
   };
 
   return (
@@ -269,3 +269,4 @@ const DebattlexIntro = () => {
 };
 
 export default DebattlexIntro;
+
