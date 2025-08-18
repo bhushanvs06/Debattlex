@@ -14,7 +14,7 @@ Debattlex is a real-time AI-powered debate platform where users can engage in st
 
 ## 🚀 Demo Video
 
-🔗 [Click here Watch](https://youtu.be/dJw6kCNbuCg)  
+🔗 [Click here Watch](https://youtu.be/31TrWEnwFSg)  
 
 ## 🔥 Features
 
