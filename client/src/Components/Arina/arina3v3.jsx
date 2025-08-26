@@ -520,34 +520,44 @@ const DebateUI = () => {
     }
   };
 
-  const generateAISpeech = async (speaker) => {
-    const expectedIndex = currentSpeakerIndex;
-    try {
-      const res = await fetch(url + "/api/generateAISpeech", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: speaker.role, team: speaker.team, topic })
-      });
-      const data = await res.json();
-      if (currentSpeakerIndex !== expectedIndex) {
-        console.log("Stale speaker index after generating speech, skipping");
-        return;
-      }
-      if (!data.transcript) {
-        console.warn("No transcript received from API");
-        return;
-      }
-      setTranscripts(prev => ({ ...prev, [speaker.role]: data.transcript }));
-      const lines = data.transcript.split(/[.?!]\s+/).filter(line => line.trim() !== '');
-      setCaptionLines(lines);
-      setCaptionLineIndex(0);
-      setHighlightedWordIndex(0);
-      speakText(lines, 0);
-      generateSummary(data.transcript, speaker);
-    } catch (err) {
-      console.error("Error generating AI speech:", err);
+ const generateAISpeech = async (speaker) => {
+  const expectedIndex = currentSpeakerIndex;
+  try {
+    // Combine previous summaries for context
+    const previousPropSummary = propSummary.join('\n');
+    const previousOppSummary = oppSummary.join('\n');
+    const previousSummaries = `Proposition summaries:\n${previousPropSummary}\n\nOpposition summaries:\n${previousOppSummary}`;
+
+    const res = await fetch(url + "/api/generateAISpeech", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        role: speaker.role, 
+        team: speaker.team, 
+        topic,
+        previousSummaries // Add this to provide context for replying
+      })
+    });
+    const data = await res.json();
+    if (currentSpeakerIndex !== expectedIndex) {
+      console.log("Stale speaker index after generating speech, skipping");
+      return;
     }
-  };
+    if (!data.transcript) {
+      console.warn("No transcript received from API");
+      return;
+    }
+    setTranscripts(prev => ({ ...prev, [speaker.role]: data.transcript }));
+    const lines = data.transcript.split(/[.?!]\s+/).filter(line => line.trim() !== '');
+    setCaptionLines(lines);
+    setCaptionLineIndex(0);
+    setHighlightedWordIndex(0);
+    speakText(lines, 0);
+    generateSummary(data.transcript, speaker);
+  } catch (err) {
+    console.error("Error generating AI speech:", err);
+  }
+};
 
   const generateSummary = async (text, speaker) => {
     try {
