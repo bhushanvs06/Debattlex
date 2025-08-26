@@ -884,16 +884,17 @@ const debateStorage = {
   }
 };
 
+
 // ✅ Route: Generate AI Speech
 app.post('/api/generateAISpeech', async (req, res) => {
-  const { role, team, topic, prep } = req.body; // 🟢 Add prep here
+  const { role, team, topic, prep, previousSummaries } = req.body; // 🟢 Add prep here and previousSummaries
 
   if (!role || !team || !topic) {
     return res.status(400).json({ error: 'Missing role, team, or topic' });
   }
 
   try {
-    const prompt = `As ${role} of the ${team === 'prop' ? 'Proposition' : 'Opposition'} team in an Asian Parliamentary debate, deliver a strong 1-minute speech on the topic: "${topic}". Use the following preparation as context: "${prep}". Speak in first person. Use a logical and persuasive tone.`;
+    const prompt = `As ${role} of the ${team === 'prop' ? 'Proposition' : 'Opposition'} team in an Asian Parliamentary debate, deliver a strong 30s speech on the topic: "${topic}". Use the following preparation as context: "${prep}". Consider the following previous summaries and reply to them if needed: "${previousSummaries}". Speak in first person. Use a logical and persuasive tone.`;
 
     const response = await client.chat.completions({
       messages: [{ role: 'user', content: prompt }],
